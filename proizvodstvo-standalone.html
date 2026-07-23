@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<!-- Автономный цеховой отчёт. Данные (без ₽/маржи), стили и логика вшиты.
+     Сгенерировано tools/build_ceh_standalone.py — не править руками. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Производство — Кабина FOXLIK · Цех</title>
+<link rel="icon" href="data:,">
+<style>
+/* Кабина FOXLIK — дизайн-система, стиль C «Гибрид» (утверждён на мокапах 17.07.2026).
+   Палитра валидирована скриптом dataviz. Факт = заливка, план = штриховка. */
+:root{
+  --dark:#1b2434; --dark2:#232e42; --bg:#f1f3f6; --card:#ffffff; --line:#e2e6ec;
+  --ink:#1f2733; --ink2:#5a6472; --ink3:#8b93a0;
+  --s2025:#8f6c1a; --s2026:#2e5496;
+  --ok:#0ca30c; --warn:#fab219; --crit:#d03b3b; --info:#1565c0; --new:#4a3aa7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 "Segoe UI",system-ui,sans-serif;padding-bottom:60px}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--s2026)}
+
+/* ── тёмная шапка ── */
+.tophead{background:linear-gradient(135deg,var(--dark),#28344c);color:#eef1f6;padding:0 36px}
+.bar1{display:flex;align-items:center;gap:24px;height:56px;max-width:1100px;margin:0 auto}
+.brand{font-size:15px;font-weight:700;letter-spacing:.14em;color:#eef1f6;text-decoration:none}
+.brand b{color:#7fa9e8}
+nav.main{display:flex;gap:6px;flex:1}
+nav.main a{padding:7px 16px;border-radius:999px;color:#b9c2d2;text-decoration:none;font-size:13.5px}
+nav.main a.on{background:rgba(255,255,255,.14);color:#fff;font-weight:600}
+nav.main a.soon{opacity:.45;cursor:default}
+nav.main a.soon i{font-style:normal;font-size:10px;margin-left:4px}
+.hero{padding:26px 0 92px;max-width:1100px;margin:0 auto}
+.q-label{font-size:11px;letter-spacing:.22em;color:#8fa2c4;text-transform:uppercase;margin-bottom:8px}
+.hero h1{font-size:27px;font-weight:650;line-height:1.3;max-width:880px;color:#fff}
+.hero .meta{color:#9aa7bd;font-size:13px;margin-top:8px}
+.wrap{max-width:1100px;margin:-64px auto 0;padding:0 36px}
+
+/* ── вердикт-карта ── */
+.verdict{background:var(--card);border-radius:14px;padding:20px 26px;
+  box-shadow:0 8px 28px rgba(27,36,52,.14);display:flex;gap:20px;align-items:flex-start;
+  border-left:5px solid var(--warn)}
+.verdict.good{border-left-color:var(--ok)}
+.verdict .icon{font-size:28px}
+.verdict h2{font-size:17.5px;font-weight:650;margin-bottom:5px}
+.verdict p{color:var(--ink2);font-size:14px;max-width:820px}
+.verdict b{color:var(--ink)}
+
+/* ── KPI ── */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:20px}
+.kpi{background:var(--card);border-radius:12px;padding:15px 17px;box-shadow:0 2px 8px rgba(27,36,52,.06)}
+.kpi .t{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.kpi .v{font-size:24px;font-weight:650;margin-top:6px}
+.kpi .d{font-size:12px;color:var(--ink2);margin-top:2px}
+.kpi.acc{border-bottom:3px solid var(--warn)} .kpi.acc .v{color:#9a6b00}
+.kpi.rec{border-bottom:3px solid var(--ok)} .kpi.rec .v{color:#0a7c0a}
+
+/* ── переключатели ── */
+.controls{display:flex;gap:18px;margin-top:18px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;background:#e6eaf0;border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 16px;border-radius:999px;
+  font:600 13px "Segoe UI",sans-serif;color:var(--ink2);cursor:pointer}
+.seg button.on{background:var(--dark);color:#fff}
+.controls .hint{font-size:12.5px;color:var(--ink3)}
+
+/* ── секции-рассказ ── */
+section{margin-top:30px;background:var(--card);border-radius:14px;
+  box-shadow:0 2px 10px rgba(27,36,52,.06);padding:24px 28px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.sec-head .n{width:28px;height:28px;border-radius:8px;background:var(--dark);color:#cfe0ff;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+.sec-head h3{font-size:17.5px;font-weight:650}
+.howto{color:var(--ink2);font-size:13.5px;max-width:860px;margin:8px 0 4px;
+  background:#f5f7fa;border-radius:8px;padding:10px 14px}
+.howto b{color:var(--ink)}
+
+/* ── светофор ── */
+.stack{display:flex;height:36px;margin-top:16px;border-radius:8px;overflow:hidden;gap:2px;background:var(--bg)}
+.stack div{min-width:4px}
+.legend{display:flex;gap:26px;margin-top:14px;flex-wrap:wrap;font-size:13.5px}
+.legend .it{display:flex;gap:8px;align-items:baseline}
+.legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block;transform:translateY(1px)}
+.legend .num{font-weight:650;font-size:14.5px}
+.legend small{color:var(--ink3)}
+
+/* ── фильтр категорий ── */
+.chips{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:5px 14px;font:13px "Segoe UI",sans-serif;color:var(--ink2);cursor:pointer}
+.chips button.on{background:var(--dark);border-color:var(--dark);color:#fff;font-weight:600}
+
+/* ── таблица позиций ── */
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);
+  text-align:left;padding:10px 12px;border-bottom:2px solid var(--line);white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:9px 12px;border-bottom:1px solid #eef1f5}
+tr.row{cursor:pointer}
+tr.row:hover td{background:#f6f8fb}
+td .cat{display:block;font-size:11.5px;color:var(--ink3)}
+.bar{height:9px;border-radius:4px;background:var(--s2026);display:inline-block;vertical-align:middle}
+.bar.plan{background:repeating-linear-gradient(45deg,var(--s2026) 0 4px,transparent 4px 8px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.badge{font-size:12px;padding:2px 10px;border-radius:20px;white-space:nowrap}
+.b-green{color:#0a6e0a;background:#e9f7e9} .b-amber{color:#8a5c00;background:#fdf3da}
+.b-red{color:#a32424;background:#fdecec} .b-new{color:#3d2f96;background:#efedfa}
+.b-info{color:#0f4f92;background:#e8f1fc}
+.corr-cell{font-size:12.5px;color:var(--ink2);white-space:nowrap}
+
+/* карточка товара (раскрытие) */
+tr.card td{background:#f8fafc;padding:16px 18px}
+.icard{display:flex;gap:34px;flex-wrap:wrap}
+.icard .facts{font-size:13.5px;color:var(--ink2);min-width:250px}
+.icard .facts b{color:var(--ink)}
+.mini{display:flex;align-items:flex-end;gap:2px;height:90px;flex:1;min-width:420px;padding-top:6px}
+.mini .m{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.mini .c{border-radius:2px 2px 0 0;min-height:1px}
+.mini .c.f25{background:var(--s2025)}
+.mini .c.f26{background:var(--s2026)}
+.mini .c.p26{background:repeating-linear-gradient(45deg,var(--s2026) 0 3px,transparent 3px 6px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.mini .lab{font-size:9px;color:var(--ink3);text-align:center;margin-top:3px}
+
+/* ── срез по категориям ── */
+.catrow{display:grid;grid-template-columns:190px 1fr 150px;gap:12px;align-items:center;
+  padding:8px 0;border-bottom:1px solid #eef1f5;font-size:13.5px}
+.catrow:last-child{border-bottom:none}
+.catrow .name{font-weight:600}
+.catrow .name small{display:block;font-weight:400;color:var(--ink3);font-size:11.5px}
+.catrow .bars{display:flex;flex-direction:column;gap:4px}
+.catrow .tr{height:11px;border-radius:4px;background:#eceff3;position:relative;overflow:hidden}
+.catrow .f{position:absolute;left:0;top:0;bottom:0;background:var(--s2026);border-radius:4px}
+.catrow .p{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
+  background:repeating-linear-gradient(45deg,var(--s2026) 0 4px,transparent 4px 8px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.catrow .nums{font-size:12.5px;color:var(--ink2);text-align:right;white-space:nowrap}
+
+/* ── ход года ── */
+.yy{display:flex;align-items:flex-end;gap:10px;height:200px;margin-top:18px;position:relative}
+.yy svg{position:absolute;left:0;top:0;width:100%;height:calc(100% - 21px);pointer-events:none;z-index:2}
+.yy .grp{flex:1;display:flex;flex-direction:column;height:100%}
+.yy .pair{flex:1;display:flex;align-items:flex-end;gap:3px}
+.yy .col{flex:1;border-radius:3px 3px 0 0;min-height:1px}
+.yy .col.f25{background:var(--s2025)}
+.yy .col.f26{background:var(--s2026)}
+.yy .col.p26{background:repeating-linear-gradient(45deg,var(--s2026) 0 4px,transparent 4px 8px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.yy .lab{font-size:10.5px;color:var(--ink3);text-align:center;margin-top:5px}
+.leg2{display:flex;gap:22px;margin-top:12px;font-size:12.5px;color:var(--ink2)}
+.leg2 .sw{width:12px;height:9px;border-radius:2px;display:inline-block;margin-right:6px;transform:translateY(1px)}
+
+/* ── вывод ── */
+section.final{border-left:5px solid var(--ok)}
+.final h4{font-size:15.5px;font-weight:650;margin:6px 0 8px}
+.final p,.final li{color:var(--ink2);font-size:14.5px}
+.final b{color:var(--ink)}
+.final ol{margin:4px 0 0 22px}
+.final li{margin:6px 0}
+
+footer{max-width:1100px;margin:34px auto 0;padding:0 36px;font-size:12px;color:var(--ink3)}
+
+/* ── обзор (уровень 0) ── */
+.secgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
+.seccard{background:var(--card);border-radius:14px;padding:20px 24px;
+  box-shadow:0 2px 10px rgba(27,36,52,.06);text-decoration:none;color:var(--ink);display:block}
+.seccard:hover{box-shadow:0 6px 20px rgba(27,36,52,.13)}
+.seccard.off{opacity:.55;pointer-events:none}
+.seccard .q{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.seccard h3{font-size:17px;margin:6px 0 4px}
+.seccard p{font-size:13.5px;color:var(--ink2)}
+.seccard .st{margin-top:10px;font-size:12.5px}
+
+/* ── шкала коридора (hero) ── */
+.hcorr{margin-top:16px;position:relative;height:74px}
+.hcorr .track{position:absolute;top:30px;left:0;right:0;height:16px;border-radius:8px;background:#eceff3}
+.hcorr .zone{position:absolute;top:26px;height:24px;background:rgba(12,163,12,.16);
+  border:1.5px solid rgba(12,163,12,.5);border-radius:6px}
+.hcorr .zlab{position:absolute;top:54px;font-size:11.5px;color:#0a7c0a;font-weight:600;white-space:nowrap}
+.hcorr .mark{position:absolute;top:20px;width:3px;height:36px;background:var(--s2026);border-radius:2px}
+.hcorr .mlab{position:absolute;top:0;transform:translateX(-50%);font-size:12.5px;font-weight:700;
+  color:var(--s2026);white-space:nowrap;background:#fff;padding:0 6px;border-radius:4px;z-index:2}
+.hcorr .rmark{position:absolute;top:23px;width:0;height:0;border-left:7px solid transparent;
+  border-right:7px solid transparent;border-top:9px solid #0a7c0a;transform:translateX(-50%)}
+.hcorr .rlab{position:absolute;top:6px;transform:translateX(-50%);font-size:11px;font-weight:600;
+  color:#0a7c0a;white-space:nowrap;background:#fff;padding:0 4px;border-radius:4px}
+
+/* ── шкала коридора в строке таблицы ── */
+.rcorr{position:relative;height:22px;min-width:170px}
+.rcorr .zone{position:absolute;top:2px;bottom:2px;background:rgba(12,163,12,.15);
+  border:1px solid rgba(12,163,12,.45);border-radius:4px}
+.rcorr .fbar{position:absolute;top:4px;height:5px;background:var(--s2026);border-radius:3px}
+.rcorr .pbar{position:absolute;bottom:4px;height:5px;border-radius:3px;
+  background:repeating-linear-gradient(45deg,var(--s2026) 0 4px,transparent 4px 8px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.ratio{font-size:11.5px;font-weight:700;margin-left:6px;white-space:nowrap}
+.r-amber{color:#8a5c00}.r-red{color:#a32424}.r-info{color:#0f4f92}.r-green{color:#0a6e0a}
+.ovrb{display:inline-block;font-size:10.5px;color:#5a4a12;background:#f6ecc9;border:1px solid #e4d089;
+  border-radius:4px;padding:0 6px;margin-left:6px;white-space:nowrap}
+.nomarg{display:inline-block;font-size:10.5px;color:#8a3030;background:#fbeaea;border-radius:4px;
+  padding:0 6px;margin-left:6px;white-space:nowrap}
+
+/* ── карточка: пары месяцев 2025/2026 ── */
+.cfacts{display:flex;flex-wrap:wrap;gap:4px 26px;font-size:13px;color:var(--ink2);margin-bottom:14px}
+.cfacts b{color:var(--ink)}
+.pairs{display:flex;align-items:flex-end;gap:10px;height:230px;padding-top:18px;
+  background-image:linear-gradient(to top,#eef1f5 1px,transparent 1px);background-size:100% 25%}
+.pairs .grp{flex:1;display:flex;flex-direction:column;height:100%}
+.pairs .duo{flex:1;display:flex;align-items:flex-end;gap:2px;position:relative}
+.pairs .b{flex:1;border-radius:2px 2px 0 0;min-height:1px;position:relative}
+.pairs .b25{background:var(--s2025)}
+.pairs .b26{background:var(--s2026)}
+.pairs .bp{background:repeating-linear-gradient(45deg,var(--s2026) 0 3px,transparent 3px 6px);
+  box-shadow:inset 0 0 0 1px var(--s2026)}
+.pairs .vv{position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:var(--s2026);white-space:nowrap;font-weight:600}
+.pairs .vv.v25{color:var(--s2025)}
+.pairs .lab{font-size:11px;color:var(--ink3);text-align:center;margin-top:4px}
+.why{margin-top:10px;font-size:13px;background:#f5f7fa;border-radius:8px;padding:8px 12px;color:var(--ink2)}
+.why b{color:var(--ink)}
+.yoy{margin-top:6px;font-size:12px;color:var(--ink2)}
+.yoy b{font-weight:600}
+.up{color:#0a7c0a}.down{color:#a32424}
+
+/* ── вклад в рост ── */
+.grow .grr{display:grid;grid-template-columns:200px 1fr 110px;gap:10px;align-items:center;
+  padding:5px 0;font-size:13px;border-bottom:1px solid #f1f3f6}
+.grow .grr:last-child{border-bottom:none}
+.grow .tr{height:10px;border-radius:4px;background:#f0f2f5;position:relative}
+.grow .bb{position:absolute;top:0;bottom:0;border-radius:4px}
+.grow .nums{text-align:right;color:var(--ink2);font-size:12.5px;white-space:nowrap}
+
+/* ── запуск новинок ── */
+.launch table td,.launch table th{padding:8px 10px}
+.launch .st{font-weight:600}
+.launch .mcell{color:var(--ink2)}
+.launch .mcell.z{color:#c9ced6}
+.stress{margin-top:12px;background:#fdf3da;border:1px solid #f0dcae;border-radius:8px;
+  padding:10px 14px;font-size:13.5px;color:#6b4b00}
+.stress b{color:#4a3400}
+
+/* ── лестница отказа ── */
+.capbox{display:flex;gap:12px;align-items:center;margin:14px 0 6px;flex-wrap:wrap}
+.capbox label{font-size:13.5px;color:var(--ink2);font-weight:600}
+.capbox input{width:120px;padding:7px 12px;border:1.5px solid var(--line);border-radius:8px;
+  font:600 14px "Segoe UI",sans-serif;color:var(--ink)}
+.capbox input:focus{outline:none;border-color:var(--s2026)}
+.capbox .capres{font-size:13.5px;color:var(--ink2)}
+.capbox .capres b{color:var(--ink)}
+.sacT td{padding:8px 12px}
+.sacT tr.ghead td{background:#f5f7fa;font-weight:650;font-size:12.5px;color:var(--ink);
+  letter-spacing:.02em;border-bottom:1px solid var(--line)}
+.sacT .mnote{display:block;font-size:11px;color:var(--ink3)}
+.sacT tr.cutrow td{background:#fdf3da}
+.sacT tr.cutpart td{background:#fdf9ec}
+.sacT .cutlbl{font-size:11px;font-weight:700;color:#8a5c00;white-space:nowrap}
+.sacT .mq{color:var(--ink3);font-weight:600}
+.sacT .mbar{display:inline-block;height:8px;border-radius:4px;background:var(--s2026);
+  opacity:.35;margin-right:7px;vertical-align:baseline}
+/* подсветка активной метрики (по чему сейчас отсортирована очередь) */
+.sacT th.mact{color:var(--s2026);text-decoration:underline;text-underline-offset:3px}
+.sacT th.mdim{color:var(--ink3);font-weight:400}
+.sacT td.mact{font-weight:700;color:var(--ink)}
+.sacT td.mdim{color:var(--ink3)}
+.sacT td.mdim .mbar{opacity:.18}
+.caprow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0 4px}
+.caprow input[type=range]{flex:1;min-width:280px;accent-color:var(--s2026)}
+.caprow .capval{font-weight:700;color:var(--s2026);font-size:18px;min-width:110px}
+.capmarks{font-size:12.5px;color:var(--ink3);margin-bottom:6px}
+.capmarks button{border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:3px 12px;margin-left:6px;font:600 12px "Segoe UI",sans-serif;color:var(--ink2);
+  cursor:pointer}
+.capmarks button:hover{border-color:var(--s2026);color:var(--s2026)}
+
+/* ── раскрывашки справочных блоков ── */
+details.fold>summary{cursor:pointer;font-size:13.5px;color:var(--s2026);font-weight:600;
+  padding:4px 0;list-style-position:inside}
+details.fold[open]>summary{margin-bottom:6px}
+
+/* ── вывод: раскрытия ── */
+.final details{margin-top:8px}
+.final summary{cursor:pointer;font-size:13.5px;color:var(--s2026);font-weight:600}
+.final details ul{margin:6px 0 0 22px;font-size:13.5px;color:var(--ink2)}
+.final details li{margin:3px 0}
+
+/* ── сверка / печать ── */
+.stamp{display:inline-block;margin-top:6px;font-size:12px;color:#0a6e0a;background:#e9f7e9;
+  border:1px solid #bfe3bf;border-radius:6px;padding:2px 10px}
+.stamp.bad{color:#a32424;background:#fdecec;border-color:#eec5c5}
+.printbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 16px;
+  font:600 13px "Segoe UI",sans-serif;color:var(--ink2);cursor:pointer}
+
+/* ── печать ── */
+@media print{
+  body{background:#fff;padding:0}
+  .tophead{background:#fff;color:var(--ink);padding:0}
+  .hero{padding:10px 0 16px}
+  .hero h1{color:var(--ink)} .hero .meta{color:var(--ink2)} .q-label{color:var(--ink3)}
+  nav.main,.controls,.chips{display:none}
+  .wrap{margin-top:0;max-width:none;padding:0}
+  section,.verdict,.kpi{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+  tr.row{cursor:default}
+}
+
+</style>
+<style>
+/* причина низкого приоритета словами (режим «по приоритету спроса») */
+.sacT .qnote{display:block;font-size:11px;color:#8a5c00;margin-top:2px}
+/* сводка объёма по месяцам */
+.pmonth{display:flex;align-items:flex-end;gap:12px;height:150px;margin-top:16px;padding-top:22px;
+  background-image:linear-gradient(to top,#eef1f5 1px,transparent 1px);background-size:100% 25%}
+.pmonth .col{flex:1;display:flex;flex-direction:column;height:100%;justify-content:flex-end;position:relative}
+.pmonth .bar{background:var(--s2026);border-radius:3px 3px 0 0;min-height:2px}
+.pmonth .col.past .bar{background:#9fb4d4}
+.pmonth .v{font-size:11.5px;color:var(--ink2);text-align:center;font-weight:650;margin-bottom:3px}
+.pmonth .lab{font-size:11px;color:var(--ink3);text-align:center;margin-top:5px}
+.pmonth .col.now::before{content:"● сейчас";position:absolute;top:-20px;left:-6px;font-size:10.5px;color:#8a5c00;font-weight:700;white-space:nowrap}
+.pmonth .col.now{border-left:2px dashed #b7c0cd;margin-left:-6px;padding-left:6px}
+/* программа товар × месяц */
+.progwrap{overflow-x:auto;margin-top:18px}
+table.prog2{border-collapse:separate;border-spacing:2px;min-width:760px}
+table.prog2 th{font-size:11px;color:var(--ink3);text-transform:none;border:none;padding:4px 6px 8px;text-align:center;white-space:nowrap}
+table.prog2 th.rowh{text-align:left;min-width:200px;color:var(--ink2);font-weight:600;font-size:12.5px}
+table.prog2 th.nowcol,table.prog2 td.nowcol{border-left:2px dashed #b7c0cd}
+table.prog2 td{padding:0;border:none}
+.pcell{height:29px;min-width:52px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.q0{background:#f4f6fa;color:var(--ink3)} .q1{background:#dce6f3;color:var(--ink)}
+.q2{background:#b6cae6;color:#12233b} .q3{background:#7ea3cf;color:#fff}
+td.past .pcell{opacity:.5}
+.prog2 td.tot,.prog2 th.tot{font-weight:650;color:var(--ink);text-align:right;padding:0 10px;font-variant-numeric:tabular-nums;font-size:13px}
+.prog2 tr.totrow th{color:var(--ink);font-weight:700;padding-top:9px;font-size:12.5px}
+.prog2 tr.totrow td .pcell{background:none;color:var(--ink);font-weight:700;border-top:2px solid var(--line);border-radius:0;padding-top:4px}
+.prog2 tr.totrow td.tot{border-top:2px solid var(--line);padding-top:6px;color:#0a4a8a}
+/* очередь: ранг */
+.medal{font-size:15px}
+.qlbl{font-size:11px;color:var(--ink3);display:block}
+/* заглушка «нужен лист Цеха» */
+.stub{margin-top:14px;background:#f5f7fa;border:1.5px dashed #c7d0dc;border-radius:10px;padding:22px 24px;color:var(--ink2);font-size:14px}
+.stub b{color:var(--ink)}
+.stub .cehs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stub .cehs span{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:12.5px;color:var(--ink2)}
+.dhint{font-size:12.5px;color:var(--ink3);margin:4px 0}
+.dhint b{color:var(--ink)}
+tr.detail td{background:#f8fafc;padding:16px 18px}
+</style>
+</head>
+<body>
+
+<div class="tophead">
+  <div class="bar1">
+    <a class="brand" href="proizvodstvo.html"><b>FOXLIK</b> КАБИНА · ЦЕХ</a>
+    <nav class="main">
+      <a class="on">Производство</a>
+      <a class="soon">Нагрузка цехов<i>нужен лист «Цеха»</i></a>
+    </nav>
+  </div>
+  <div class="hero">
+    <div class="q-label">Вопрос раздела · цеховая кабина · без рублей</div>
+    <h1>Что, сколько и в каком порядке производить по месяцам?</h1>
+    <div class="meta" id="meta"></div>
+  </div>
+</div>
+
+<div class="wrap" id="app">
+
+  <div class="verdict" id="verdict"></div>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="controls">
+    <button class="printbtn" onclick="window.print()">🖨 Печать / PDF</button>
+    <span class="hint">самодостаточный файл · без маржи и рублей</span>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="n">1</span><h3>Производственная программа — что и сколько по месяцам</h3></div>
+    <div class="howto">Главная таблица цеха: <b>изделие × месяц → штук произвести</b>
+      (объём = план продаж следующего месяца, сдвиг −1). Сверху — сводка по месяцам; пунктир
+      <b>«сейчас»</b> отделяет уже идущее от предстоящего. Чем насыщеннее ячейка, тем больше партия.</div>
+    <div class="pmonth" id="pmonth"></div>
+    <div class="progwrap">
+      <table class="prog2">
+        <thead><tr><th class="rowh">Изделие \ месяц</th><th>Июн</th><th>Июл</th><th class="nowcol">Авг</th><th>Сен</th><th>Окт</th><th>Ноя</th><th class="tot">Σ H2</th></tr></thead>
+        <tbody id="progBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sac">
+    <div class="sec-head"><span class="n">2</span><h3>Очередь производства и сценарий мощности</h3></div>
+    <div class="controls" style="margin:6px 0 10px"><span class="seg" id="segQ"><button data-v="unit" class="on">Маржинальность на 1 шт</button><button data-v="vol">Маржинальность со всего объёма</button></span></div>
+    <div class="howto"><span id="qLeg"></span> <b>Двигай ползунок</b> — «сколько штук цех успевает
+      за горизонт»: мощность раздаётся сверху вниз, видно что <b>полностью</b>, что <b>частично</b>,
+      что <b>не влезло</b>. <i>Рублей на экране нет — маржинальность как коэффициент 1–100. Слайдер
+      в штуках, пока трудозатраты на изделие сопоставимы.</i></div>
+    <div class="caprow">
+      <input type="range" id="capSl">
+      <div class="capval num" id="capVal"></div>
+    </div>
+    <div class="capmarks">мощность цеха:
+      <button onclick="var s=capSl;s.value=24000;s.dispatchEvent(new Event('input'))">реалистичная 24 000</button>
+      <button onclick="var s=capSl;s.value=s.max;s.dispatchEvent(new Event('input'))">полный план</button>
+    </div>
+    <table class="sacT">
+      <thead><tr><th>Очередь</th><th>Изделие</th><th class="r" id="thCoef">Марж. /шт</th><th class="r" id="thMass">Марж. всего</th><th class="r">План H2, шт</th><th class="r">В пр-во</th><th>Статус</th></tr></thead>
+      <tbody id="queueBody"></tbody>
+    </table>
+    <div class="howto" id="capSummary" style="margin-top:12px"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="n">3</span><h3>Нагрузка по цехам</h3></div>
+    <div class="howto">Здесь появятся плитки цехов и матрица цех×месяц (нормо-часы) — как только будет
+      заполнена трудоёмкость.</div>
+    <div class="stub">⏳ <b>Нужен лист «Цеха»</b> в таблице 16s: минут/шт по 6 цехам для каждого изделия.
+      Как заполнишь и дашь <b>gid</b> — этот блок соберётся из реальной трудоёмкости (нагрузка в часах, узкие места).
+      <div class="cehs"><span>Распил</span><span>ЧПУ</span><span>Шлифовка</span><span>Покраска лаком</span><span>Сборка</span><span>Упаковка</span></div>
+    </div>
+  </section>
+
+  <section class="grow">
+    <div class="sec-head"><span class="n">4</span><h3>Прирост производства к прошлому году (в штуках)</h3></div>
+    <div class="howto">План на этот сезон против того же сезона 2025 — по позициям, в штуках.
+      Фиолетовые — новинки (прошлого года не было). <i>Производство 2025 приближено фактом продаж 2025.</i></div>
+    <div id="grow"></div>
+  </section>
+
+  <section class="shift">
+    <div class="sec-head"><span class="n">5</span><h3>Изделие — динамика год-к-году</h3></div>
+    <div class="howto"><b>Клик по изделию</b> — помесячно прошлый год против этого (бронза — 2025, синяя — 2026)
+      и итог сезона. Маршрут по цехам добавится с листом «Цеха».</div>
+    <table>
+      <thead><tr><th>Изделие</th><th class="r">Произвести H2-26</th><th class="r">Факт H2-25</th><th>Год к году</th></tr></thead>
+      <tbody id="dynBody"></tbody>
+    </table>
+  </section>
+
+  <section class="final">
+    <h4>Что дальше</h4>
+    <p>Всё выше — на <b>реальных данных</b> из плана продаж (объёмы, очередь, прирост, динамика),
+      <b>без рублей и маржи</b>. Осталось заполнить лист «Цеха» — и добавится блок 3 (нагрузка цехов,
+      узкие места) и маршрут по цехам в карточке изделия.</p>
+  </section>
+
+</div>
+
+<footer id="foot"></footer>
+
+<script>window.CABIN_DATA={"meta": {"sliceDate": "2026-07-17", "source": "Google-таблица «План продаж 2026 для Claude», лист gid 1680078228 (живой CSV-экспорт)", "totals": {"f25": 29621, "f26h1": 14401, "planH2": 27800}}, "items": [{"name": "SPFKDK-Конструктор", "cat": "Столы-песочницы", "mcoef": 100, "f25": [195, 191, 209, 215, 167, 157, 173, 221, 195, 231, 282, 431], "y26": [177, 125, 134, 139, 145, 156, 150, 180, 180, 200, 250, 450]}, {"name": "SPFKDK-Алфавит", "cat": "Столы-песочницы", "mcoef": 86, "f25": [128, 159, 155, 118, 112, 77, 143, 113, 107, 150, 149, 268], "y26": [175, 192, 134, 124, 112, 98, 100, 150, 150, 170, 170, 250]}, {"name": "SPFKDK-Городок", "cat": "Столы-песочницы", "mcoef": 86, "f25": [108, 125, 102, 89, 72, 39, 70, 158, 121, 127, 164, 211], "y26": [124, 90, 83, 58, 56, 40, 50, 70, 70, 100, 140, 200]}, {"name": "SPFKDK-Белоснежная", "cat": "Столы-песочницы", "mcoef": 86, "f25": [127, 135, 121, 116, 144, 78, 112, 155, 112, 118, 170, 206], "y26": [165, 124, 109, 84, 80, 66, 100, 110, 110, 110, 140, 200]}, {"name": "SPFKDK-КартаМира", "cat": "Столы-песочницы", "mcoef": 86, "f25": [52, 61, 121, 44, 40, 25, 39, 105, 87, 85, 74, 155], "y26": [86, 51, 55, 40, 42, 21, 30, 40, 40, 50, 70, 100]}, {"name": "ПланшетБезКрышки", "cat": "Планшеты", "mcoef": 31, "f25": [251, 320, 274, 221, 162, 242, 327, 364, 403, 450, 466, 888], "y26": [258, 271, 283, 252, 261, 195, 230, 300, 300, 450, 500, 900]}, {"name": "PLPSNN-ПланшетНожки", "cat": "Планшеты", "mcoef": 34, "f25": [187, 271, 208, 167, 119, 146, 223, 246, 236, 405, 288, 487], "y26": [136, 160, 145, 133, 121, 106, 180, 200, 200, 350, 300, 450]}, {"name": "полка_3уровня_НОВАЯ", "cat": "Полки и стеллажи", "mcoef": 16, "f25": [137, 86, 234, 212, 347, 267, 421, 487, 384, 430, 385, 386], "y26": [504, 309, 67, 179, 284, 229, 300, 350, 350, 400, 400, 400]}, {"name": "полка_2уровня", "cat": "Полки и стеллажи", "mcoef": 16, "f25": [76, 104, 128, 131, 185, 77, 190, 334, 306, 286, 254, 189], "y26": [205, 259, 125, 77, 78, 120, 200, 250, 250, 300, 250, 250]}, {"name": "Полка_резинки", "cat": "Полки и стеллажи", "mcoef": 9, "f25": [88, 14, 0, 0, 78, 72, 100, 69, 131, 41, 48, 118], "y26": [157, 92, 122, 61, 38, 42, 50, 50, 50, 50, 50, 50]}, {"name": "стол_стул_2024", "cat": "Столы и стулья", "mcoef": 97, "f25": [196, 260, 434, 268, 245, 196, 349, 422, 484, 469, 465, 591], "y26": [558, 503, 491, 487, 475, 429, 500, 550, 600, 600, 600, 700]}, {"name": "полка_на_колесах", "cat": "Полки и стеллажи", "mcoef": 22, "f25": [62, 51, 78, 54, 79, 66, 26, 123, 46, 56, 79, 104], "y26": [187, 122, 79, 103, 104, 79, 100, 120, 120, 120, 120, 120]}, {"name": "Стол-Флисат-Белый", "cat": "Столы и стулья", "mcoef": 67, "f25": [57, 69, 57, 72, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"name": "полка_ткань_книги_малая_серый", "cat": "Полки и стеллажи", "mcoef": 20, "f25": [9, 13, 23, 17, 0, 26, 15, 17, 55, 7, 1, 0], "y26": [17, 11, 6, 30, 0, 0, 20, 20, 20, 20, 20, 20]}, {"name": "полка_ткань_книги_малая_белый", "cat": "Полки и стеллажи", "mcoef": 20, "f25": [18, 7, 52, 24, 0, 0, 34, 50, 53, 62, 51, 0], "y26": [81, 63, 49, 68, 51, 58, 40, 60, 60, 60, 60, 60]}, {"name": "STDT-СтеллажДетский", "cat": "Полки и стеллажи", "mcoef": 27, "f25": [13, 21, 44, 42, 26, 28, 57, 65, 49, 57, 0, 28], "y26": [74, 74, 65, 56, 41, 53, 60, 60, 60, 60, 60, 60]}, {"name": "СтулПрямоугольный", "cat": "Столы и стулья", "mcoef": 15, "f25": [0, 0, 0, 0, 0, 53, 83, 172, 68, 15, 111, 97], "y26": [85, 74, 63, 72, 48, 51, 60, 60, 70, 70, 70, 100]}, {"name": "стеллаж_контейн_дуб", "cat": "Полки и стеллажи", "mcoef": 67, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [58, 2, 25, 92, 65, 17, 60, 80, 80, 80, 80, 80]}, {"name": "стеллаж_контейн_белый", "cat": "Полки и стеллажи", "mcoef": 10, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 16, 40, 40, 40, 40, 40, 40]}, {"name": "PZKRDR1ПрозрКрышкМ", "cat": "Прочее", "mcoef": 0, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 40, 30, 30, 30, 30, 30]}, {"name": "Столик Мольберт", "cat": "Мольберты", "mcoef": 26, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 107, 191, 400, 500, 500, 700, 800, 800]}, {"name": "Модуль_3шт", "cat": "Прочее", "mcoef": 73, "f25": [0, 0, 0, 0, 0, 0, 77, 78, 55, 9, 14, 7], "y26": [0, 32, 123, 120, 113, 94, 80, 80, 80, 100, 100, 100]}, {"name": "стол_стул_2024_латте", "cat": "Столы и стулья", "mcoef": 87, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 80, 38, 150, 150, 150, 150, 150, 150]}, {"name": "стол_стул_2024_серый", "cat": "Столы и стулья", "mcoef": 87, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 25, 42, 80, 80, 80, 80, 80, 80]}, {"name": "Башня Помощника", "cat": "Прочее", "mcoef": 27, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 100, 150, 200, 250, 250, 200]}, {"name": "Полочка 4 секции", "cat": "Прочее", "mcoef": 13, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 100, 100, 100, 200, 200, 200]}, {"name": "Столик Мольберт (серый)", "cat": "Мольберты", "mcoef": 24, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 0, 100, 100, 100, 100, 100]}, {"name": "Столик Мольберт (латте)", "cat": "Мольберты", "mcoef": 24, "f25": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "y26": [0, 0, 0, 0, 0, 0, 0, 150, 150, 150, 150, 150]}]};</script>
+<script>
+/* Цеховая кабина FOXLIK — раздел «Производство».
+   Данные — из window.CABIN_DATA. В цеховом (облегчённом) слое приоритет очереди приходит
+   готовым рангом 1/2/3, денежных полей нет. В управленческом слое ранг вычисляется на месте.
+   На экран цеха деньги не выводятся ни в каком виде. */
+(function () {
+  var D = window.CABIN_DATA;
+  var root = document.getElementById('app');
+  if (!D || !D.items) { root.innerHTML = '<p style="padding:40px">Нет data.js</p>'; return; }
+  var items = D.items.slice();
+
+  // ── производственный календарь: производство мес k (июнь..ноябрь) = продажи k+1 (июль..декабрь) = y26[6+k]
+  var MP = ['Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь'];
+  var MPS = ['Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя'];
+  var NOW_IDX = 2; // граница «сейчас»: производство августа (под сентябрьские продажи) — ближайшее к 21.07
+
+  function prodArr(it) { return it.y26.slice(6, 12); }            // 6 значений: июнь..ноябрь
+  function prodSum(it) { return prodArr(it).reduce(function (a, b) { return a + b; }, 0); }
+  function fact25(it) { return it.f25.slice(6, 12); }            // H2-2025 помесячно (тот же сезон)
+  function fact25Sum(it) { return fact25(it).reduce(function (a, b) { return a + b; }, 0); }
+  function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
+
+  var MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' }, QLBL = { 1: 'первая', 2: 'вторая', 3: 'третья' };
+
+  /* ── МАРЖИНАЛЬНОСТЬ КАК КОЭФФИЦИЕНТ 1–100 (без рублей — приватность публичного отчёта).
+     coef = margin / maxMargin × 100. В standalone coef предвычислен сборщиком (поле mcoef),
+     сама маржа в файл не попадает; в исходнике считается из полных данных на лету.
+     Переключатель — калька кабины (блок 6): 'unit' (на 1 шт) / 'vol' (со всего объёма). */
+  var _maxM = 0;
+  items.forEach(function (it) { var m = it.margin || 0; if (m > _maxM) _maxM = m; });
+  if (_maxM <= 0) _maxM = 1;
+  function mcoefOf(it) {                                  // 0 = маржа неизвестна (в конец с «?»)
+    if (typeof it.mcoef === 'number') return it.mcoef;
+    return Math.round((it.margin || 0) / _maxM * 100);
+  }
+  var TH1 = 67, TH2 = 27;                                 // пороги коэффициента маржинальности (1–100)
+
+  /* очередь по режиму: 'unit' — по коэффициенту/шт (медали по порогам);
+     'vol' — по вкладу coef×объём (медали ABC по кумулятиву). Оба монотонны порядку. */
+  function queueBy(mode) {
+    var L = items.filter(function (it) { return prodSum(it) > 0; });   // в очередь — только с планом H2
+    L.forEach(function (it) { it._coef = mcoefOf(it); it._mass = it._coef * prodSum(it); });
+    var mxMass = 1;
+    L.forEach(function (it) { if (it._mass > mxMass) mxMass = it._mass; });
+    L.forEach(function (it) { it._massCoef = Math.round(it._mass / mxMass * 100); });
+    if (mode === 'vol') {
+      L.sort(function (a, b) { return (a._coef === 0 ? 1 : 0) - (b._coef === 0 ? 1 : 0) || b._mass - a._mass || prodSum(b) - prodSum(a); });
+      var tot = L.reduce(function (s, it) { return s + it._mass; }, 0) || 1, cum = 0;
+      L.forEach(function (it) { if (it._coef === 0) { it._tier = null; return; } cum += it._mass; var p = cum / tot; it._tier = p <= 0.5 ? 1 : p <= 0.8 ? 2 : 3; });
+    } else {
+      L.sort(function (a, b) { return (a._coef === 0 ? 1 : 0) - (b._coef === 0 ? 1 : 0) || b._coef - a._coef || prodSum(b) - prodSum(a); });
+      L.forEach(function (it) { it._tier = it._coef ? (it._coef >= TH1 ? 1 : it._coef >= TH2 ? 2 : 3) : null; });
+    }
+    return L;
+  }
+
+  // объём по производственным месяцам + сверка
+  var monthTot = [0, 0, 0, 0, 0, 0];
+  items.forEach(function (it) { var p = prodArr(it); for (var k = 0; k < 6; k++) monthTot[k] += p[k]; });
+  var volH2 = monthTot.reduce(function (a, b) { return a + b; }, 0);
+  var fact25H2 = items.reduce(function (s, it) { return s + fact25Sum(it); }, 0);
+  var growPct = fact25H2 ? Math.round((volH2 / fact25H2 - 1) * 100) : 0;
+
+  // ── сверка: объём производства H2 обязан равняться плану продаж H2 из meta
+  var svOK = (volH2 === D.meta.totals.planH2);
+  if (svOK) console.log('Сверка OK: объём производства H2 = план продаж H2 = ' + volH2);
+  else console.error('СВЕРКА ПРОВАЛЕНА: объём производства ' + volH2 + ' != planH2 ' + D.meta.totals.planH2);
+
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); };
+
+  // ── мета/сверка в подвал
+  document.getElementById('foot').innerHTML = esc(D.meta.source) + ' · срез ' + esc(D.meta.sliceDate) +
+    ' · данные: data/data.js<br><span class="stamp' + (svOK ? '' : ' bad') + '">' +
+    (svOK ? 'Сверка OK: объём производства H2 = ' + fmt(volH2) + ' = план продаж H2' : 'СВЕРКА ПРОВАЛЕНА') + '</span>';
+  document.getElementById('meta').textContent = 'Срез данных: ' + D.meta.sliceDate + ' · обновление по запросу · без денег';
+
+  // ── вердикт
+  var byVol = items.slice().sort(function (a, b) { return prodSum(b) - prodSum(a); });
+  var peakMonth = MP[monthTot.indexOf(Math.max.apply(null, monthTot))];
+  document.getElementById('verdict').innerHTML =
+    '<div class="icon">🏭</div><div>' +
+    '<h2>Пик объёма — ' + peakMonth + '; всего к производству ' + fmt(volH2) + ' шт</h2>' +
+    '<p>За июнь–ноябрь произвести <b>' + fmt(volH2) + ' шт</b> (' + (growPct >= 0 ? '+' : '') + growPct +
+    '% к тому же сезону 2025). Больше всех — <b>' + esc(byVol[0].name) + '</b> (' + fmt(prodSum(byVol[0])) +
+    ' шт). Нагрузка по цехам появится, когда будет заполнен лист «Цеха».</p></div>';
+
+  // ── KPI
+  document.getElementById('kpis').innerHTML =
+    kpi('К производству H2', fmt(volH2), 'шт · июнь–ноябрь') +
+    kpi('Прирост к 2025', (growPct >= 0 ? '+' : '') + growPct + '%', 'в штуках, тот же сезон') +
+    kpi('Позиций', items.length, 'в производстве') +
+    kpi('Больше всех', shortName(byVol[0].name), fmt(prodSum(byVol[0])) + ' шт', 'acc') +
+    kpi('Пик месяца', peakMonth, fmt(Math.max.apply(null, monthTot)) + ' шт', 'rec');
+  function kpi(t, v, d, cls) {
+    return '<div class="kpi ' + (cls || '') + '"><div class="t">' + t + '</div><div class="v num">' +
+      v + '</div><div class="d">' + d + '</div></div>';
+  }
+  function shortName(n) { return n.length > 13 ? n.slice(0, 12) + '…' : n; }
+
+  // ── блок 1: сводка по месяцам + программа товар×месяц
+  var maxMonth = Math.max.apply(null, monthTot);
+  var pm = '';
+  for (var k = 0; k < 6; k++) {
+    var cls = k < NOW_IDX ? 'past' : (k === NOW_IDX ? 'now' : '');
+    pm += '<div class="col ' + cls + '"><div class="v num">' + fmt(monthTot[k]) + '</div>' +
+      '<div class="bar" style="height:' + Math.round(monthTot[k] / maxMonth * 100) + '%"></div>' +
+      '<div class="lab">' + MPS[k] + '</div></div>';
+  }
+  document.getElementById('pmonth').innerHTML = pm;
+
+  var maxCell = 0;
+  items.forEach(function (it) { prodArr(it).forEach(function (v) { if (v > maxCell) maxCell = v; }); });
+  function qcls(v) { var r = v / maxCell; return r < .15 ? 'q0' : r < .35 ? 'q1' : r < .6 ? 'q2' : 'q3'; }
+  var prog = '';
+  byVol.forEach(function (it) {
+    var p = prodArr(it), row = '<tr><th class="rowh">' + esc(it.name) + '</th>';
+    for (var k = 0; k < 6; k++) {
+      row += '<td class="' + (k < NOW_IDX ? 'past ' : '') + (k === NOW_IDX ? 'nowcol' : '') + '">' +
+        '<div class="pcell ' + qcls(p[k]) + '">' + fmt(p[k]) + '</div></td>';
+    }
+    row += '<td class="tot">' + fmt(prodSum(it)) + '</td></tr>';
+    prog += row;
+  });
+  // итоговая строка
+  var totRow = '<tr class="totrow"><th class="rowh">Всего по ' + items.length + ' позициям</th>';
+  for (var k = 0; k < 6; k++) totRow += '<td class="' + (k === NOW_IDX ? 'nowcol' : '') + '"><div class="pcell">' + fmt(monthTot[k]) + '</div></td>';
+  totRow += '<td class="tot">' + fmt(volH2) + '</td></tr>';
+  document.getElementById('progBody').innerHTML = prog + totRow;
+
+  // ── блок 2: очередь + мощность — переключатель «Маржинальность на 1 шт ↔ со всего объёма»
+  var prioMode = 'unit';                                   // дефолт: маржинальность на 1 шт
+  var slider = document.getElementById('capSl');
+  slider.min = 15000; slider.max = volH2; slider.value = Math.min(24000, volH2);
+  function coefCell(v, active) {                            // ячейка коэффициента (0 → «?»)
+    return '<td class="r num ' + (active ? 'mact' : 'mdim') + '">' + (v > 0 ? v : '<span class="mq">?</span>') + '</td>';
+  }
+  function renderQueue() {
+    var queue = queueBy(prioMode), um = prioMode === 'unit';
+    var thC = document.getElementById('thCoef'), thM = document.getElementById('thMass'), leg = document.getElementById('qLeg');
+    if (thC) thC.className = 'r ' + (um ? 'mact' : 'mdim');
+    if (thM) thM.className = 'r ' + (um ? 'mdim' : 'mact');
+    if (leg) leg.innerHTML = um
+      ? 'Очередь <b>по маржинальности на 1 шт</b> (коэффициент 1–100): 🥇 ≥67 · 🥈 ≥27 · 🥉 <27. Рублей на экране нет.'
+      : 'Очередь <b>по маржинальности со всего объёма</b> (коэффициент × штуки): 🥇 дают вместе ~50% вклада · 🥈 до 80% · 🥉 хвост. Объёмные товары поднимаются наверх.';
+    var cap = +slider.value, cum = 0, rows = '';
+    document.getElementById('capVal').textContent = fmt(cap) + ' шт';
+    var nFull = 0, nPart = 0, nNo = 0;
+    queue.forEach(function (it) {
+      var need = prodSum(it), give, st, cls = '';
+      if (cum >= cap) { give = 0; st = '<span class="badge b-red">не влезло</span>'; cls = 'cutrow'; nNo++; }
+      else if (cum + need <= cap) { give = need; st = '<span class="badge b-green">полностью</span>'; nFull++; }
+      else { give = cap - cum; st = '<span class="badge b-amber">частично</span>'; cls = 'cutpart'; nPart++; }
+      cum += give;
+      var rk = it._tier;
+      rows += '<tr class="' + cls + '"><td>' + (rk ? '<span class="medal">' + MEDAL[rk] + '</span><span class="qlbl">' + QLBL[rk] + '</span>' : '<span class="mq">?</span>') +
+        '</td><td>' + esc(it.name) + (isNew(it) ? ' <span class="badge b-new">новинка</span>' : '') + '</td>' +
+        coefCell(it._coef, um) + coefCell(it._massCoef, !um) +
+        '<td class="r num">' + fmt(need) + '</td><td class="r num">' + fmt(give) + '</td><td>' + st + '</td></tr>';
+    });
+    document.getElementById('queueBody').innerHTML = rows;
+    document.getElementById('capSummary').innerHTML = 'При мощности <b>' + fmt(cap) + ' шт</b>: ' +
+      '<b>' + nFull + '</b> полностью · <b>' + nPart + '</b> частично · <b>' + nNo + '</b> не влезло.' +
+      ' Режется хвост очереди (🥉). Экономики в рублях на экране нет — маржинальность как коэффициент 1–100.';
+  }
+  function isNew(it) { return fact25Sum(it) === 0; }
+  var segQ = document.getElementById('segQ');
+  if (segQ) Array.prototype.slice.call(segQ.querySelectorAll('button')).forEach(function (b) {
+    b.onclick = function () {
+      prioMode = b.dataset.v;
+      Array.prototype.slice.call(segQ.querySelectorAll('button')).forEach(function (x) { x.classList.toggle('on', x === b); });
+      renderQueue();
+    };
+  });
+  slider.addEventListener('input', renderQueue);
+  renderQueue();
+
+  // ── блок 4: прирост к прошлому году (в штуках)
+  var gro = items.slice().map(function (it) {
+    var p = prodSum(it), f = fact25Sum(it);
+    return { it: it, p: p, f: f, d: p - f, pct: f ? Math.round((p / f - 1) * 100) : null };
+  }).sort(function (a, b) { return b.d - a.d; });
+  var maxAbs = Math.max.apply(null, gro.map(function (g) { return Math.abs(g.d); })) || 1;
+  var groHtml = '';
+  gro.forEach(function (g) {
+    var isN = g.f === 0, w = Math.round(Math.abs(g.d) / maxAbs * 100);
+    var color = isN ? 'var(--new)' : (g.d >= 0 ? 'var(--s2026)' : 'var(--crit)');
+    var note = isN ? '<b>' + fmt(g.p) + '</b> · новинка' :
+      fmt(g.f) + ' → <b>' + fmt(g.p) + '</b> · <span class="' + (g.pct >= 0 ? 'up' : 'down') + '">' +
+      (g.pct >= 0 ? '+' : '') + g.pct + '%</span>';
+    groHtml += '<div class="grr"><div>' + esc(g.it.name) + '</div>' +
+      '<div class="tr"><div class="bb" style="left:0;width:' + w + '%;background:' + color + '"></div></div>' +
+      '<div class="nums">' + note + '</div></div>';
+  });
+  document.getElementById('grow').innerHTML = groHtml;
+
+  // ── блок 5: изделие → динамика год-к-году (по клику)
+  var rows5 = '';
+  byVol.forEach(function (it, i) {
+    var yr25 = fact25Sum(it), yr26 = prodSum(it), pct = yr25 ? Math.round((yr26 / yr25 - 1) * 100) : null;
+    rows5 += '<tr class="row" data-i="' + i + '"><td><b>' + esc(it.name) + '</b>' +
+      (isNew(it) ? ' <span class="badge b-new">новинка</span>' : '') + '</td>' +
+      '<td class="r num">' + fmt(yr26) + '</td>' +
+      '<td class="r">' + (yr25 ? fmt(yr25) : '—') + '</td>' +
+      '<td>' + (pct === null ? '<span class="badge b-new">новинка</span>' :
+        '<span class="' + (pct >= 0 ? 'up' : 'down') + '">' + (pct >= 0 ? '+' : '') + pct + '%</span>') + '</td></tr>';
+  });
+  document.getElementById('dynBody').innerHTML = rows5;
+  document.getElementById('dynBody').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr.row'); if (!tr) return;
+    var i = +tr.dataset.i, it = byVol[i];
+    var open = tr.nextSibling && tr.nextSibling.classList && tr.nextSibling.classList.contains('detail');
+    // закрыть все
+    Array.prototype.slice.call(document.querySelectorAll('tr.detail')).forEach(function (d) { d.remove(); });
+    if (open) return;
+    var det = document.createElement('tr'); det.className = 'detail';
+    det.innerHTML = '<td colspan="4">' + pairsHtml(it) + '</td>';
+    tr.parentNode.insertBefore(det, tr.nextSibling);
+  });
+  function pairsHtml(it) {
+    var f = fact25(it), p = prodArr(it), mx = Math.max.apply(null, f.concat(p)) || 1, g = '';
+    for (var k = 0; k < 6; k++) {
+      g += '<div class="grp"><div class="duo">' +
+        '<div class="b b25" style="height:' + Math.round(f[k] / mx * 100) + '%"><span class="vv v25">' + fmt(f[k]) + '</span></div>' +
+        '<div class="b b26" style="height:' + Math.round(p[k] / mx * 100) + '%"><span class="vv">' + fmt(p[k]) + '</span></div>' +
+        '</div><div class="lab">' + MPS[k] + '</div></div>';
+    }
+    var yr25 = fact25Sum(it), yr26 = prodSum(it), pct = yr25 ? Math.round((yr26 / yr25 - 1) * 100) : null;
+    return '<div class="dhint"><b>Год к году, штук производить помесячно</b> (бронза — 2025, синяя — 2026):</div>' +
+      '<div class="pairs">' + g + '</div>' +
+      '<div class="yoy" style="margin-top:26px">Сезон: <b>2025 — ' + fmt(yr25) + ' шт</b> → <b>2026 — ' + fmt(yr26) + ' шт</b>' +
+      (pct === null ? ' · <span class="up">новинка</span>' : ' · <span class="' + (pct >= 0 ? 'up' : 'down') + '">' + (pct >= 0 ? '+' : '') + pct + '%</span>') + '</div>';
+  }
+
+  // экспорт чистых функций для node-теста (в браузере module отсутствует)
+  if (typeof module !== 'undefined' && module.exports)
+    module.exports = { mcoefOf: mcoefOf, queueBy: queueBy, items: items };
+})();
+
+</script>
+</body>
+</html>
